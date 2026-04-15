@@ -71,7 +71,6 @@ export default function FileCard({ entry, onRemove }: Props) {
     processProgress,
     uploadDurationMs,
     processDurationMs,
-    overallDurationMs,
     totalRows,
     error,
   } = entry;
@@ -167,11 +166,11 @@ export default function FileCard({ entry, onRemove }: Props) {
               </span>
             </span>
           )}
-          {overallDurationMs !== undefined && (
+          {uploadDurationMs !== undefined && processDurationMs !== undefined && (
             <span>
               Total:{' '}
               <span className="font-medium text-indigo-600">
-                {formatMs(overallDurationMs)}
+                {formatMs(uploadDurationMs + processDurationMs)}
               </span>
             </span>
           )}

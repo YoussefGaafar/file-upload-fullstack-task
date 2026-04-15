@@ -14,9 +14,9 @@ export default function UploadPage() {
     files.length > 0 &&
     files.every((f) => f.status === 'completed' || f.status === 'failed');
 
-  // Overall timing across all files
+  // Overall timing across all files (upload + process for each file)
   const overallMs = files.reduce(
-    (sum, f) => sum + (f.overallDurationMs ?? 0),
+    (sum, f) => sum + (f.uploadDurationMs ?? 0) + (f.processDurationMs ?? 0),
     0
   );
   const formatMs = (ms: number) =>
