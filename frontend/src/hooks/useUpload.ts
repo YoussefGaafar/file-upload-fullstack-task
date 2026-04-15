@@ -54,7 +54,10 @@ export function useUpload() {
         );
 
       // ── 1. Upload ────────────────────────────────────────────────────────
-      patch({ status: 'uploading', uploadStartTime: performance.now() });
+      // Capture start time in a local variable — entry.uploadStartTime would
+      // always be undefined here because patch() is async (React setState).
+      const uploadStartTime = performance.now();
+      patch({ status: 'uploading', uploadStartTime });
 
       const formData = new FormData();
       formData.append('file', file);
@@ -80,9 +83,7 @@ export function useUpload() {
       }
 
       const uploadEndTime = performance.now();
-      const uploadDurationMs = Math.round(
-        uploadEndTime - (entry.uploadStartTime ?? uploadEndTime)
-      );
+      const uploadDurationMs = Math.round(uploadEndTime - uploadStartTime);
 
       patch({
         jobId,
