@@ -4,6 +4,25 @@ The frontend is a single-page application that lets users upload multiple CSV fi
 
 ---
 
+## Screenshots
+
+### Upload in progress — parallel uploads with per-file progress bars
+![Upload in progress](docs/screenshots/upload-in-progress.png)
+
+### Upload completed — all files done with timing metrics
+![Upload completed](docs/screenshots/upload-completed.png)
+
+### Student Records listing — sortable, filterable table
+![Students listing](docs/screenshots/students-listing.png)
+
+### Students pagination — 337,423 records across 16,872 pages
+![Students pagination](docs/screenshots/students-pagination.png)
+
+### Clear All confirmation modal
+![Clear all modal](docs/screenshots/clear-all-modal.png)
+
+---
+
 ## Tech Stack
 
 | Concern | Choice |

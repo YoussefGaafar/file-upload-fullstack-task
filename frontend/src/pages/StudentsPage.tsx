@@ -5,7 +5,7 @@ import Filters from '../components/students/Filters';
 import StudentsTable from '../components/students/StudentsTable';
 import Pagination from '../components/students/Pagination';
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 export default function StudentsPage() {
   const { data, loading, error, filters, updateFilters, toggleSort, refresh } =
