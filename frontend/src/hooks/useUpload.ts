@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import axios from 'axios';
 import type { FileUploadState, JobEvent } from '../types';
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 let localIdCounter = 0;
 const nextLocalId = () => `local-${++localIdCounter}`;

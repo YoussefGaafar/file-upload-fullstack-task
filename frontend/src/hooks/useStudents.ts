@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import type { StudentFilters, StudentsResponse } from '../types';
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 const DEFAULT_FILTERS: StudentFilters = {
   name: '',
