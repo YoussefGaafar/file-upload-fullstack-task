@@ -190,6 +190,64 @@ I chose counting newline bytes directly over parsing the CSV to count rows becau
 
 ---
 
+## Known Deployment Issues & Explicit Error Handling
+
+This section documents real errors encountered during production deployment and exactly how they were resolved. Each fix is explicit — no silent fallbacks.
+
+---
+
+### 413 Request Entity Too Large — Nginx upload size limit
+
+**When it happens:** A user uploads a CSV file larger than 1 MB.
+
+**Root cause:** Nginx ships with a default `client_max_body_size` of 1 MB. The CSV files in this project average 6–7 MB each. When the file exceeds the limit, Nginx rejects the request before it even reaches the Go backend, returning HTTP `413`.
+
+**Screenshot:**
+
+![413 Nginx Upload Limit](docs/screenshots/413-nginx-upload-limit.png)
+
+**The error shown to the user:** `Request failed with status code 413` — displayed in the file card's error banner on the upload page, with the upload progress bar frozen at whatever percentage it reached before Nginx cut the connection.
+
+**Fix applied in `/etc/nginx/sites-available/juhi`:**
+
+```nginx
+server {
+    server_name juhi.ygaafar.dev;
+    client_max_body_size 100M;   # ← added this line
+    ...
+}
+```
+
+Applied with:
+```bash
+sed -i 's/server_name juhi.ygaafar.dev;/server_name juhi.ygaafar.dev;\n    client_max_body_size 100M;/' /etc/nginx/sites-available/juhi
+nginx -t && systemctl reload nginx
+```
+
+**Why 100M:** The largest test CSV file is ~66 MB. 100 MB gives ample headroom for any realistic CSV upload while still protecting the server from unbounded request bodies.
+
+---
+
+### Frontend pointing to localhost in production
+
+**When it happens:** After deploying, both the upload and students pages show network errors immediately.
+
+**Root cause:** The frontend hooks had `API_BASE` hardcoded to `http://localhost:8080/api`. In production, the browser sends requests to `localhost` on the user's machine instead of the server.
+
+**Fix applied in `useStudents.ts` and `useUpload.ts`:**
+
+```ts
+// Before
+const API_BASE = 'http://localhost:8080/api';
+
+// After — relative URL works on both local dev and production
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+```
+
+Nginx proxies `/api/*` to `localhost:8080` on the server, so the relative URL resolves correctly in production. In local development, `VITE_API_BASE` can be set in `.env.local` to override it.
+
+---
+
 ## Testing
 
 ### Running the tests
