@@ -7,6 +7,19 @@ interface Props {
   onChange: (delta: Partial<StudentFilters>) => void;
 }
 
+// Blocks e, E, +, -, . so only whole digits are accepted.
+const blockNonDigits = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (['e', 'E', '+', '-', '.'].includes(e.key)) e.preventDefault();
+};
+
+// Clamps the typed value to [0, 100] and strips anything non-numeric.
+const clampGrade = (raw: string): string => {
+  if (raw === '') return '';
+  const n = parseInt(raw, 10);
+  if (isNaN(n)) return '';
+  return String(Math.min(100, Math.max(0, n)));
+};
+
 export default function Filters({ filters, onChange }: Props) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -43,7 +56,8 @@ export default function Filters({ filters, onChange }: Props) {
             max={100}
             placeholder="0"
             value={filters.gradeGt}
-            onChange={(e) => onChange({ gradeGt: e.target.value })}
+            onKeyDown={blockNonDigits}
+            onChange={(e) => onChange({ gradeGt: clampGrade(e.target.value) })}
             className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 sm:w-20"
           />
         </div>
@@ -56,7 +70,8 @@ export default function Filters({ filters, onChange }: Props) {
             max={100}
             placeholder="100"
             value={filters.gradeLt}
-            onChange={(e) => onChange({ gradeLt: e.target.value })}
+            onKeyDown={blockNonDigits}
+            onChange={(e) => onChange({ gradeLt: clampGrade(e.target.value) })}
             className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 sm:w-20"
           />
         </div>
