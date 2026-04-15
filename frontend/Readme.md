@@ -4,6 +4,18 @@ The frontend is a single-page application that lets users upload multiple CSV fi
 
 ---
 
+## Mobile Support
+
+The UI is responsive and usable on small screens:
+
+- **Navbar** — logo and nav links scale down cleanly on mobile viewports
+- **Upload page** — the drop zone, file cards, and progress bars reflow to full width
+- **Students page header** — on mobile the title and the "Clear All" button stack vertically (column layout); on `sm+` they sit side by side
+- **Filters bar** — on mobile, the name search and subject dropdown expand to full width and stack; the Grade `>` and Grade `<` inputs always share a single row, splitting the available space evenly so they never wrap awkwardly
+- **Grade inputs** — restricted to integers 0–100 only; special characters (`e`, `E`, `+`, `-`, `.`) are blocked at the keyboard level and any value above 100 is automatically clamped to 100
+
+---
+
 ## Screenshots
 
 ### Upload in progress — parallel uploads with per-file progress bars
