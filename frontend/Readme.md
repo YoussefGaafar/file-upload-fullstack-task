@@ -21,6 +21,9 @@ The frontend is a single-page application that lets users upload multiple CSV fi
 ### Clear All confirmation modal
 ![Clear all modal](docs/screenshots/clear-all-modal.png)
 
+### Empty state — no records in the database
+![Empty state](docs/screenshots/students-empty-state.png)
+
 ---
 
 ## Tech Stack
