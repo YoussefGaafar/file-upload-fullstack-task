@@ -13,6 +13,22 @@ export default function StudentsPage() {
 
   const [clearing, setClearing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [dbTotal, setDbTotal] = useState<number | null>(null);
+
+  const openConfirm = async () => {
+    setConfirmOpen(true);
+    // Fetch the true unfiltered total — data.total reflects the current
+    // filter, not the whole database.
+    try {
+      const { data: res } = await axios.get<{ total: number }>(
+        `${API_BASE}/students`,
+        { params: { page: 1, page_size: 1 } }
+      );
+      setDbTotal(res.total);
+    } catch {
+      setDbTotal(null);
+    }
+  };
 
   const handleClear = async () => {
     setClearing(true);
@@ -22,6 +38,7 @@ export default function StudentsPage() {
     } finally {
       setClearing(false);
       setConfirmOpen(false);
+      setDbTotal(null);
     }
   };
 
@@ -37,7 +54,7 @@ export default function StudentsPage() {
         </div>
 
         <button
-          onClick={() => setConfirmOpen(true)}
+          onClick={openConfirm}
           disabled={clearing || (data?.total === 0)}
           className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
         >
@@ -100,14 +117,14 @@ export default function StudentsPage() {
             <p className="mb-6 text-sm text-gray-500">
               This will permanently delete all{' '}
               <span className="font-medium text-gray-800">
-                {data?.total.toLocaleString()}
+                {dbTotal !== null ? dbTotal.toLocaleString() : '…'}
               </span>{' '}
               student records from the database. This action cannot be undone.
             </p>
 
             <div className="flex gap-3">
               <button
-                onClick={() => setConfirmOpen(false)}
+                onClick={() => { setConfirmOpen(false); setDbTotal(null); }}
                 className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
               >
                 Cancel
