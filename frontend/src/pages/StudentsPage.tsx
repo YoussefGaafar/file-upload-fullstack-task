@@ -55,7 +55,7 @@ export default function StudentsPage() {
 
         <button
           onClick={openConfirm}
-          disabled={clearing || data?.total === 0}
+          disabled={loading || clearing || data?.total === 0}
           className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
         >
           <svg
@@ -173,7 +173,7 @@ export default function StudentsPage() {
               </button>
               <button
                 onClick={handleClear}
-                disabled={clearing || loading}
+                disabled={clearing}
                 className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
               >
                 {clearing ? 'Clearing…' : 'Yes, clear all'}
