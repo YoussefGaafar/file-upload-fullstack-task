@@ -6,13 +6,13 @@ The backend is a Go HTTP server that accepts large CSV uploads, processes them c
 
 ## Tech Stack
 
-| Concern | Choice |
-|---|---|
-| HTTP framework | [Gin](https://github.com/gin-gonic/gin) |
-| Database driver | [pgx/v5](https://github.com/jackc/pgx) |
+| Concern         | Choice                                        |
+| --------------- | --------------------------------------------- |
+| HTTP framework  | [Gin](https://github.com/gin-gonic/gin)       |
+| Database driver | [pgx/v5](https://github.com/jackc/pgx)        |
 | UUID generation | [google/uuid](https://github.com/google/uuid) |
-| Env loading | [godotenv](https://github.com/joho/godotenv) |
-| Database | PostgreSQL 16 (via Docker) |
+| Env loading     | [godotenv](https://github.com/joho/godotenv)  |
+| Database        | PostgreSQL 16 (via Docker)                    |
 
 ---
 
@@ -35,10 +35,10 @@ docker compose up -d
 
 This starts a PostgreSQL 16 container on port `5432` with:
 
-| Setting | Value |
-|---|---|
-| User | `postgres` |
-| Password | `postgres` |
+| Setting  | Value            |
+| -------- | ---------------- |
+| User     | `postgres`       |
+| Password | `postgres`       |
 | Database | `file_upload_db` |
 
 ### 2. Configure environment
@@ -68,6 +68,7 @@ go run ./cmd/server
 ```
 
 The server will:
+
 1. Connect to PostgreSQL and run migrations automatically.
 2. Create the `UPLOAD_DIR` if it doesn't exist.
 3. Start listening on `http://localhost:8080`.
@@ -88,6 +89,7 @@ curl -X POST http://localhost:8080/api/upload \
 ```
 
 **Response:**
+
 ```json
 {
   "job_id": "19a96a43-dc6a-4f78-944c-ec0a8a3f2f7e",
@@ -130,16 +132,16 @@ Each event is a JSON payload:
 
 Paginated, sorted, and filtered list of all stored student records.
 
-| Param | Type | Default | Description |
-|---|---|---|---|
-| `page` | int | `1` | Page number |
-| `page_size` | int | `20` | Rows per page (max 100) |
-| `sort_by` | string | `student_name` | `student_name` or `grade` |
-| `sort_order` | string | `asc` | `asc` or `desc` |
-| `name` | string | — | Partial name match (case-insensitive) |
-| `subject` | string | — | Exact subject match |
-| `grade_gt` | int | — | Grade strictly greater than |
-| `grade_lt` | int | — | Grade strictly less than |
+| Param        | Type   | Default        | Description                           |
+| ------------ | ------ | -------------- | ------------------------------------- |
+| `page`       | int    | `1`            | Page number                           |
+| `page_size`  | int    | `20`           | Rows per page (max 100)               |
+| `sort_by`    | string | `student_name` | `student_name` or `grade`             |
+| `sort_order` | string | `asc`          | `asc` or `desc`                       |
+| `name`       | string | —              | Partial name match (case-insensitive) |
+| `subject`    | string | —              | Exact subject match                   |
+| `grade_gt`   | int    | —              | Grade strictly greater than           |
+| `grade_lt`   | int    | —              | Grade strictly less than              |
 
 ```bash
 curl "http://localhost:8080/api/students?sort_by=grade&sort_order=desc&subject=Physics&page=1&page_size=10"
@@ -219,6 +221,7 @@ server {
 ```
 
 Applied with:
+
 ```bash
 sed -i 's/server_name juhi.ygaafar.dev;/server_name juhi.ygaafar.dev;\n    client_max_body_size 100M;/' /etc/nginx/sites-available/juhi
 nginx -t && systemctl reload nginx
@@ -241,10 +244,10 @@ nginx -t && systemctl reload nginx
 const API_BASE = 'http://localhost:8080/api';
 
 // After — relative URL works on both local dev and production
-const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+const API_BASE = import.meta.env.VITE_API_BASE;
 ```
 
-Nginx proxies `/api/*` to `localhost:8080` on the server, so the relative URL resolves correctly in production. In local development, `VITE_API_BASE` can be set in `.env.local` to override it.
+Nginx proxies `/api/*` to `localhost:8080` on the server, so the relative URL resolves correctly in production. In local development, `VITE_API_BASE` has been set in `.env.local` to override it.
 
 ---
 
@@ -273,15 +276,15 @@ go test -race -v ./internal/...
 
 Tests the `snapshot()` method on the `Job` struct, which is responsible for computing the durations and progress percentage that get sent to SSE subscribers.
 
-| Test | Goal |
-|---|---|
-| `TestSnapshot_NoTimesSet` | When no timestamps are set, all durations and percentage must be `0` — guards against zero-value panics or garbage math. |
-| `TestSnapshot_UploadDuration` | With `UploadStartAt` and `UploadEndAt` set 200 ms apart, `UploadDurationMs` must equal exactly `200`. |
+| Test                                        | Goal                                                                                                                                                        |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TestSnapshot_NoTimesSet`                   | When no timestamps are set, all durations and percentage must be `0` — guards against zero-value panics or garbage math.                                    |
+| `TestSnapshot_UploadDuration`               | With `UploadStartAt` and `UploadEndAt` set 200 ms apart, `UploadDurationMs` must equal exactly `200`.                                                       |
 | `TestSnapshot_ProcessDurationAndPercentage` | With 250 of 1000 rows processed and process times 500 ms apart, verifies `ProgressPct == 25` and `ProcessDurationMs == 500` and `OverallDurationMs == 700`. |
-| `TestSnapshot_PercentageCapsAt100` | When `ProcessedRows > TotalRows` (edge case from a race), the percentage must be capped at `100` and must not exceed it. |
-| `TestSnapshot_ZeroTotalRowsNoPanic` | When `TotalRows == 0`, percentage calculation must return `0` without a division-by-zero panic. |
-| `TestSnapshot_CompletedJob` | A completed job with equal processed and total rows must report `status=completed` and `ProgressPct=100`. |
-| `TestSnapshot_FieldsMatchJob` | `JobID`, `FileName`, and `Error` fields in the event must mirror the source `Job` struct exactly. |
+| `TestSnapshot_PercentageCapsAt100`          | When `ProcessedRows > TotalRows` (edge case from a race), the percentage must be capped at `100` and must not exceed it.                                    |
+| `TestSnapshot_ZeroTotalRowsNoPanic`         | When `TotalRows == 0`, percentage calculation must return `0` without a division-by-zero panic.                                                             |
+| `TestSnapshot_CompletedJob`                 | A completed job with equal processed and total rows must report `status=completed` and `ProgressPct=100`.                                                   |
+| `TestSnapshot_FieldsMatchJob`               | `JobID`, `FileName`, and `Error` fields in the event must mirror the source `Job` struct exactly.                                                           |
 
 ---
 
@@ -289,20 +292,20 @@ Tests the `snapshot()` method on the `Job` struct, which is responsible for comp
 
 Tests the `JobManager` — the in-memory singleton that tracks every job and fans progress events out to SSE subscribers.
 
-| Test | Goal |
-|---|---|
-| `TestCreateJob_FieldsAreSet` | After `CreateJob`, the returned job must have the correct `ID`, `FileName`, `Status=pending`, and `UploadStartAt`. |
-| `TestGetJob_ReturnsJobAfterCreate` | `GetJob` must return the same job that was just created. |
-| `TestGetJob_UnknownIDReturnsNil` | `GetJob` for a non-existent ID must return `nil` without panicking. |
-| `TestMarkUploaded_TransitionsStatus` | After `MarkUploaded`, `Status` must be `uploaded` and `UploadEndAt` must match the provided timestamp. |
-| `TestStartProcessing_SetsProcessingState` | After `StartProcessing`, `Status` must be `processing`, `TotalRows` must be set, and `ProcessStartAt` must be non-zero. |
-| `TestUpdateProgress_UpdatesProcessedRows` | After `UpdateProgress(500)`, `ProcessedRows` on the job must equal `500`. |
-| `TestCompleteJob_SetsCompletedState` | After `CompleteJob`, `Status` must be `completed`, `ProcessedRows` must equal `TotalRows`, and `ProcessEndAt` must be set. |
-| `TestFailJob_SetsFailedState` | After `FailJob("disk full")`, `Status` must be `failed` and `Error` must contain the provided message. |
-| `TestSubscribe_UnknownJob_ClosedChannel` | Subscribing to a non-existent job must return a channel that is already closed, so callers can range over it safely. |
-| `TestSubscribe_ReceivesInitialSnapshot` | Subscribing to an active job must immediately deliver the current state snapshot on the channel without waiting for the next update. |
-| `TestSubscribe_TerminalJob_ImmediateEvent` | Subscribing to an already-completed job must push the final event and not block — the SSE handler must be able to detect and close the stream. |
-| `TestJobManager_ConcurrentAccess` | 50 goroutines each create, process, and complete different jobs simultaneously. Run with `-race` to confirm no data races exist on the shared `jobs` map. |
+| Test                                       | Goal                                                                                                                                                      |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TestCreateJob_FieldsAreSet`               | After `CreateJob`, the returned job must have the correct `ID`, `FileName`, `Status=pending`, and `UploadStartAt`.                                        |
+| `TestGetJob_ReturnsJobAfterCreate`         | `GetJob` must return the same job that was just created.                                                                                                  |
+| `TestGetJob_UnknownIDReturnsNil`           | `GetJob` for a non-existent ID must return `nil` without panicking.                                                                                       |
+| `TestMarkUploaded_TransitionsStatus`       | After `MarkUploaded`, `Status` must be `uploaded` and `UploadEndAt` must match the provided timestamp.                                                    |
+| `TestStartProcessing_SetsProcessingState`  | After `StartProcessing`, `Status` must be `processing`, `TotalRows` must be set, and `ProcessStartAt` must be non-zero.                                   |
+| `TestUpdateProgress_UpdatesProcessedRows`  | After `UpdateProgress(500)`, `ProcessedRows` on the job must equal `500`.                                                                                 |
+| `TestCompleteJob_SetsCompletedState`       | After `CompleteJob`, `Status` must be `completed`, `ProcessedRows` must equal `TotalRows`, and `ProcessEndAt` must be set.                                |
+| `TestFailJob_SetsFailedState`              | After `FailJob("disk full")`, `Status` must be `failed` and `Error` must contain the provided message.                                                    |
+| `TestSubscribe_UnknownJob_ClosedChannel`   | Subscribing to a non-existent job must return a channel that is already closed, so callers can range over it safely.                                      |
+| `TestSubscribe_ReceivesInitialSnapshot`    | Subscribing to an active job must immediately deliver the current state snapshot on the channel without waiting for the next update.                      |
+| `TestSubscribe_TerminalJob_ImmediateEvent` | Subscribing to an already-completed job must push the final event and not block — the SSE handler must be able to detect and close the stream.            |
+| `TestJobManager_ConcurrentAccess`          | 50 goroutines each create, process, and complete different jobs simultaneously. Run with `-race` to confirm no data races exist on the shared `jobs` map. |
 
 ---
 
@@ -310,14 +313,14 @@ Tests the `JobManager` — the in-memory singleton that tracks every job and fan
 
 Tests the `countDataRows` helper, which fast-scans a file for newlines to determine how many data rows it contains — used to seed the progress percentage denominator before any CSV parsing begins.
 
-| Test | Goal |
-|---|---|
-| `TestCountDataRows_EmptyFile` | An empty file must return `0` rows and no error. |
-| `TestCountDataRows_HeaderOnly` | A file with only the header line must return `0` data rows (header is subtracted). |
-| `TestCountDataRows_ThreeDataRows_WithTrailingNewline` | A standard 4-line CSV (1 header + 3 data + trailing `\n`) must return exactly `3`. |
-| `TestCountDataRows_ThreeDataRows_NoTrailingNewline` | A file whose last line is not terminated by `\n` must still count that line — i.e. also return `3`. |
-| `TestCountDataRows_SingleDataRow` | A file with one data row must return `1`, verifying the header-subtraction logic handles the minimum case. |
-| `TestCountDataRows_NonExistentFile` | Passing a path that does not exist must return an error, not a zero count. |
+| Test                                                  | Goal                                                                                                       |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `TestCountDataRows_EmptyFile`                         | An empty file must return `0` rows and no error.                                                           |
+| `TestCountDataRows_HeaderOnly`                        | A file with only the header line must return `0` data rows (header is subtracted).                         |
+| `TestCountDataRows_ThreeDataRows_WithTrailingNewline` | A standard 4-line CSV (1 header + 3 data + trailing `\n`) must return exactly `3`.                         |
+| `TestCountDataRows_ThreeDataRows_NoTrailingNewline`   | A file whose last line is not terminated by `\n` must still count that line — i.e. also return `3`.        |
+| `TestCountDataRows_SingleDataRow`                     | A file with one data row must return `1`, verifying the header-subtraction logic handles the minimum case. |
+| `TestCountDataRows_NonExistentFile`                   | Passing a path that does not exist must return an error, not a zero count.                                 |
 
 ---
 
@@ -325,20 +328,20 @@ Tests the `countDataRows` helper, which fast-scans a file for newlines to determ
 
 Tests the `GET /api/students` handler and its two private helpers. The handler is wired to a `StudentLister` interface so all tests run without a real database.
 
-| Test | Goal |
-|---|---|
-| `TestQueryInt_DefaultWhenEmpty` | When the query param is absent, `queryInt` must return the provided default value. |
-| `TestQueryInt_ValidValue` | A valid numeric string (e.g. `"3"`) must be parsed and returned as an integer. |
-| `TestQueryInt_InvalidFallsBack` | A non-numeric value (e.g. `"abc"`) must fall back to the default rather than erroring. |
-| `TestQueryInt_ZeroFallsBack` | A value of `"0"` must fall back to the default because page numbers below `1` are invalid. |
-| `TestClamp_BelowMin` | A value below the minimum must be raised to the minimum. |
-| `TestClamp_AboveMax` | A value above the maximum must be lowered to the maximum. |
-| `TestClamp_InRange` | A value already within bounds must pass through unchanged. |
-| `TestListStudentsHandler_Returns200WithData` | A successful repository response must produce HTTP `200` with correct JSON — verifies serialization of `StudentName` and array structure. |
-| `TestListStudentsHandler_RepoError_Returns500` | When the repository returns an error, the handler must respond with HTTP `500` and not panic. |
-| `TestListStudentsHandler_EmptyResult` | An empty `data` array from the repository must produce a valid `200` response with an empty slice, not `null`. |
-| `TestListStudentsHandler_PageSizeClamped` | Passing `page_size=999` must result in `PageSize ≤ 100` reaching the repository — the clamp is applied before the query. |
-| `TestListStudentsHandler_DefaultSortIsStudentNameAsc` | With no sort params in the request, the repository must receive `sort_by=student_name` and `sort_order=asc`. |
+| Test                                                  | Goal                                                                                                                                      |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `TestQueryInt_DefaultWhenEmpty`                       | When the query param is absent, `queryInt` must return the provided default value.                                                        |
+| `TestQueryInt_ValidValue`                             | A valid numeric string (e.g. `"3"`) must be parsed and returned as an integer.                                                            |
+| `TestQueryInt_InvalidFallsBack`                       | A non-numeric value (e.g. `"abc"`) must fall back to the default rather than erroring.                                                    |
+| `TestQueryInt_ZeroFallsBack`                          | A value of `"0"` must fall back to the default because page numbers below `1` are invalid.                                                |
+| `TestClamp_BelowMin`                                  | A value below the minimum must be raised to the minimum.                                                                                  |
+| `TestClamp_AboveMax`                                  | A value above the maximum must be lowered to the maximum.                                                                                 |
+| `TestClamp_InRange`                                   | A value already within bounds must pass through unchanged.                                                                                |
+| `TestListStudentsHandler_Returns200WithData`          | A successful repository response must produce HTTP `200` with correct JSON — verifies serialization of `StudentName` and array structure. |
+| `TestListStudentsHandler_RepoError_Returns500`        | When the repository returns an error, the handler must respond with HTTP `500` and not panic.                                             |
+| `TestListStudentsHandler_EmptyResult`                 | An empty `data` array from the repository must produce a valid `200` response with an empty slice, not `null`.                            |
+| `TestListStudentsHandler_PageSizeClamped`             | Passing `page_size=999` must result in `PageSize ≤ 100` reaching the repository — the clamp is applied before the query.                  |
+| `TestListStudentsHandler_DefaultSortIsStudentNameAsc` | With no sort params in the request, the repository must receive `sort_by=student_name` and `sort_order=asc`.                              |
 
 ---
 
@@ -346,8 +349,8 @@ Tests the `GET /api/students` handler and its two private helpers. The handler i
 
 Tests the validation path of `POST /api/upload`. These are pure unit tests — no temp files are written and no goroutines are started because all assertions target the `400` error responses that fire before any I/O.
 
-| Test | Goal |
-|---|---|
-| `TestUploadHandler_MissingFileField_Returns400` | A request with no multipart body must return `400` with an appropriate error message. |
-| `TestUploadHandler_NonCSVFile_Returns400` | Uploading a `.txt` file must be rejected with `400` — only `.csv` extensions are accepted. |
-| `TestUploadHandler_WrongFieldName_Returns400` | Using a field name other than `"file"` (e.g. `"data"`) must return `400`, enforcing the API contract. |
+| Test                                            | Goal                                                                                                  |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `TestUploadHandler_MissingFileField_Returns400` | A request with no multipart body must return `400` with an appropriate error message.                 |
+| `TestUploadHandler_NonCSVFile_Returns400`       | Uploading a `.txt` file must be rejected with `400` — only `.csv` extensions are accepted.            |
+| `TestUploadHandler_WrongFieldName_Returns400`   | Using a field name other than `"file"` (e.g. `"data"`) must return `400`, enforcing the API contract. |

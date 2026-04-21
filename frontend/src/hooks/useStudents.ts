@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import type { StudentFilters, StudentsResponse } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const DEFAULT_FILTERS: StudentFilters = {
   name: '',
@@ -38,7 +38,7 @@ export function useStudents() {
 
       const { data: res } = await axios.get<StudentsResponse>(
         `${API_BASE}/students`,
-        { params }
+        { params },
       );
       setData(res);
     } catch {
@@ -61,18 +61,14 @@ export function useStudents() {
     });
   }, []);
 
-  const toggleSort = useCallback(
-    (col: 'student_name' | 'grade') => {
-      setFilters((prev) => ({
-        ...prev,
-        sortBy: col,
-        sortOrder:
-          prev.sortBy === col && prev.sortOrder === 'asc' ? 'desc' : 'asc',
-        page: 1,
-      }));
-    },
-    []
-  );
+  const toggleSort = useCallback((col: 'student_name' | 'grade') => {
+    setFilters((prev) => ({
+      ...prev,
+      sortBy: col,
+      sortOrder: prev.sortBy === col && prev.sortOrder === 'asc' ? 'desc' : 'asc',
+      page: 1,
+    }));
+  }, []);
 
   const refresh = useCallback(() => {
     fetchStudents(filters);

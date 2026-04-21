@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import axios from 'axios';
 import type { FileUploadState, JobEvent } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 let localIdCounter = 0;
 const nextLocalId = () => `local-${++localIdCounter}`;
@@ -17,9 +17,7 @@ export function useUpload() {
   const addFiles = useCallback((incoming: File[]) => {
     setFiles((prev) => {
       const existingKeys = new Set(prev.map((f) => `${f.file.name}-${f.file.size}`));
-      const novel = incoming.filter(
-        (f) => !existingKeys.has(`${f.name}-${f.size}`)
-      );
+      const novel = incoming.filter((f) => !existingKeys.has(`${f.name}-${f.size}`));
       const newEntries: FileUploadState[] = novel.map((f) => ({
         localId: nextLocalId(),
         file: f,
@@ -39,103 +37,100 @@ export function useUpload() {
   /** Clear all completed/failed files from the list. */
   const clearFinished = useCallback(() => {
     setFiles((prev) =>
-      prev.filter((f) => f.status !== 'completed' && f.status !== 'failed')
+      prev.filter((f) => f.status !== 'completed' && f.status !== 'failed'),
     );
   }, []);
 
   /** Upload one file, open SSE, and stream processing progress. */
-  const uploadOne = useCallback(
-    async (entry: FileUploadState) => {
-      const { localId, file } = entry;
+  const uploadOne = useCallback(async (entry: FileUploadState) => {
+    const { localId, file } = entry;
 
-      const patch = (delta: Partial<FileUploadState>) =>
-        setFiles((prev) =>
-          prev.map((f) => (f.localId === localId ? { ...f, ...delta } : f))
-        );
+    const patch = (delta: Partial<FileUploadState>) =>
+      setFiles((prev) =>
+        prev.map((f) => (f.localId === localId ? { ...f, ...delta } : f)),
+      );
 
-      // ── 1. Upload ────────────────────────────────────────────────────────
-      // Capture start time in a local variable — entry.uploadStartTime would
-      // always be undefined here because patch() is async (React setState).
-      const uploadStartTime = performance.now();
-      patch({ status: 'uploading', uploadStartTime });
+    // ── 1. Upload ────────────────────────────────────────────────────────
+    // Capture start time in a local variable — entry.uploadStartTime would
+    // always be undefined here because patch() is async (React setState).
+    const uploadStartTime = performance.now();
+    patch({ status: 'uploading', uploadStartTime });
 
-      const formData = new FormData();
-      formData.append('file', file);
+    const formData = new FormData();
+    formData.append('file', file);
 
-      let jobId: string;
-      try {
-        const { data } = await axios.post<{ job_id: string }>(
-          `${API_BASE}/upload`,
-          formData,
-          {
-            onUploadProgress(e) {
-              if (e.total) {
-                patch({ uploadProgress: Math.round((e.loaded / e.total) * 100) });
-              }
-            },
-          }
-        );
-        jobId = data.job_id;
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Upload failed';
-        patch({ status: 'failed', error: msg });
-        return;
-      }
-
-      const uploadEndTime = performance.now();
-      const uploadDurationMs = Math.round(uploadEndTime - uploadStartTime);
-
-      patch({
-        jobId,
-        status: 'uploaded',
-        uploadProgress: 100,
-        uploadEndTime,
-        uploadDurationMs,
-      });
-
-      // ── 2. Stream processing progress via SSE ────────────────────────────
-      patch({ status: 'processing' });
-
-      await new Promise<void>((resolve) => {
-        const es = new EventSource(`${API_BASE}/progress/${jobId}`);
-        esRefs.current.set(jobId, es);
-
-        es.onmessage = (e) => {
-          try {
-            const event: JobEvent = JSON.parse(e.data);
-
-            patch({
-              status: event.status,
-              processProgress: Math.min(Math.round(event.progress_pct), 100),
-              totalRows: event.total_rows,
-              processedRows: event.processed_rows,
-              processDurationMs: Math.round(event.process_duration_ms),
-              overallDurationMs: Math.round(event.overall_duration_ms),
-            });
-
-            if (event.status === 'completed' || event.status === 'failed') {
-              if (event.status === 'failed') {
-                patch({ error: event.error });
-              }
-              es.close();
-              esRefs.current.delete(jobId);
-              resolve();
+    let jobId: string;
+    try {
+      const { data } = await axios.post<{ job_id: string }>(
+        `${API_BASE}/upload`,
+        formData,
+        {
+          onUploadProgress(e) {
+            if (e.total) {
+              patch({ uploadProgress: Math.round((e.loaded / e.total) * 100) });
             }
-          } catch {
-            // malformed event – ignore
-          }
-        };
+          },
+        },
+      );
+      jobId = data.job_id;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Upload failed';
+      patch({ status: 'failed', error: msg });
+      return;
+    }
 
-        es.onerror = () => {
-          patch({ status: 'failed', error: 'SSE connection lost' });
-          es.close();
-          esRefs.current.delete(jobId);
-          resolve();
-        };
-      });
-    },
-    []
-  );
+    const uploadEndTime = performance.now();
+    const uploadDurationMs = Math.round(uploadEndTime - uploadStartTime);
+
+    patch({
+      jobId,
+      status: 'uploaded',
+      uploadProgress: 100,
+      uploadEndTime,
+      uploadDurationMs,
+    });
+
+    // ── 2. Stream processing progress via SSE ────────────────────────────
+    patch({ status: 'processing' });
+
+    await new Promise<void>((resolve) => {
+      const es = new EventSource(`${API_BASE}/progress/${jobId}`);
+      esRefs.current.set(jobId, es);
+
+      es.onmessage = (e) => {
+        try {
+          const event: JobEvent = JSON.parse(e.data);
+
+          patch({
+            status: event.status,
+            processProgress: Math.min(Math.round(event.progress_pct), 100),
+            totalRows: event.total_rows,
+            processedRows: event.processed_rows,
+            processDurationMs: Math.round(event.process_duration_ms),
+            overallDurationMs: Math.round(event.overall_duration_ms),
+          });
+
+          if (event.status === 'completed' || event.status === 'failed') {
+            if (event.status === 'failed') {
+              patch({ error: event.error });
+            }
+            es.close();
+            esRefs.current.delete(jobId);
+            resolve();
+          }
+        } catch {
+          // malformed event – ignore
+        }
+      };
+
+      es.onerror = () => {
+        patch({ status: 'failed', error: 'SSE connection lost' });
+        es.close();
+        esRefs.current.delete(jobId);
+        resolve();
+      };
+    });
+  }, []);
 
   /** Kick off all pending files in parallel. */
   const startImport = useCallback(async () => {
