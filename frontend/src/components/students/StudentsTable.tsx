@@ -62,7 +62,7 @@ function gradeColor(grade: number) {
 }
 
 export default function StudentsTable({ students, filters, onSort }: Props) {
-  if (students.length === 0) {
+  if (!students || students.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-gray-400">
         <svg className="mb-3 h-12 w-12" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24">
