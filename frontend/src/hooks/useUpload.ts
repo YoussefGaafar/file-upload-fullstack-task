@@ -74,7 +74,12 @@ export function useUpload() {
       );
       jobId = data.job_id;
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Upload failed';
+      let msg = 'Upload failed';
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        msg = err.response.data.error;
+      } else if (err instanceof Error) {
+        msg = err.message;
+      }
       patch({ status: 'failed', error: msg });
       return;
     }

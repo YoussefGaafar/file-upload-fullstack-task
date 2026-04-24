@@ -247,7 +247,33 @@ const API_BASE = 'http://localhost:8080/api';
 const API_BASE = import.meta.env.VITE_API_BASE;
 ```
 
-Nginx proxies `/api/*` to `localhost:8080` on the server, so the relative URL resolves correctly in production. In local development, `VITE_API_BASE` has been set in `.env.local` to override it.
+Nginx proxies `/api/*` to `localhost:8080` on the server, so the relative URL resolves correctly in production. In local development, `VITE_API_BASE` is set in `frontend/.env`.
+
+---
+
+### Upload progress bar not animating in production
+
+**When it happens:** The blue upload progress bar jumps straight from 0 % to 100 % with no intermediate updates, while the green processing bar streams correctly.
+
+**Root cause:** Nginx's default `proxy_request_buffering on` causes Nginx to buffer the entire request body before forwarding it to the Go backend. The browser's `onUploadProgress` callback measures how fast bytes reach Nginx — not Go. Because Nginx is on the same server, the browser fills Nginx's buffer almost instantly, so the progress event fires once at 100 % rather than gradually.
+
+**Fix applied in `/etc/nginx/sites-available/juhi`:**
+
+```nginx
+location /api/ {
+    proxy_pass http://localhost:8080;
+    proxy_request_buffering off;   # ← added this line
+    ...
+}
+```
+
+Applied with:
+```bash
+sed -i 's|proxy_pass http://localhost:8080;|proxy_pass http://localhost:8080;\n        proxy_request_buffering off;|' /etc/nginx/sites-available/juhi
+nginx -t && systemctl reload nginx
+```
+
+**Why `proxy_request_buffering off`:** This tells Nginx to stream the incoming request body directly to the Go backend as bytes arrive from the browser, rather than accumulating the full file first. The Go backend's `ReadTimeout` is set to 10 minutes to accommodate large uploads over slow connections.
 
 ---
 

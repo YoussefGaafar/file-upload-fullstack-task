@@ -9,14 +9,16 @@ interface Props {
 
 export default function DropZone({ onFiles, disabled }: Props) {
   const [isDragging, setIsDragging] = useState(false);
+  const [rejected, setRejected] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(
     (list: FileList | null) => {
       if (!list) return;
-      const csvFiles = Array.from(list).filter((f) =>
-        f.name.toLowerCase().endsWith('.csv')
-      );
+      const all = Array.from(list);
+      const csvFiles = all.filter((f) => f.name.toLowerCase().endsWith('.csv'));
+      const rejectedFiles = all.filter((f) => !f.name.toLowerCase().endsWith('.csv'));
+      if (rejectedFiles.length) setRejected(rejectedFiles.map((f) => f.name));
       if (csvFiles.length) onFiles(csvFiles);
     },
     [onFiles]
@@ -85,6 +87,27 @@ export default function DropZone({ onFiles, disabled }: Props) {
         onChange={(e) => handleFiles(e.target.files)}
         disabled={disabled}
       />
+
+      {rejected.length > 0 && (
+        <div
+          className="absolute bottom-3 left-3 right-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 border border-red-200 flex items-start justify-between gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span>
+            <span className="font-semibold">Only .csv files are accepted. </span>
+            Rejected: {rejected.slice(0, 3).join(', ')}
+            {rejected.length > 3 && ` and ${rejected.length - 3} more`}
+          </span>
+          <button
+            onClick={() => setRejected([])}
+            type="button"
+            className="shrink-0 text-red-400 hover:text-red-600"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }

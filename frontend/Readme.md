@@ -76,6 +76,16 @@ npm install
 npm run dev
 ```
 
+The dev server proxies all `/api/*` requests to `http://localhost:8080` automatically (configured in `vite.config.ts`), so no CORS issues occur in local development.
+
+A `.env` file is included with:
+
+```env
+VITE_API_BASE=/api
+```
+
+This works for both local dev (via Vite proxy) and production (via Nginx reverse proxy).
+
 ### Production build
 
 ```bash
@@ -89,7 +99,7 @@ npm run preview    # preview the production build locally
 
 ### Upload (`/`)
 
-- **Drag & drop zone** — drag one or more `.csv` files directly onto the zone, or click it to open a file picker. Both flows feed into the same upload queue.
+- **Drag & drop zone** — drag one or more `.csv` files directly onto the zone, or click it to open a file picker. Both flows feed into the same upload queue. Non-CSV files are rejected immediately with an inline error message naming the rejected files.
 - **File queue** — files appear as cards the moment they are added. Each card shows:
   - File name and size
   - Status badge (`Pending → Uploading → Processing → Done / Failed`)
@@ -97,6 +107,7 @@ npm run preview    # preview the production build locally
   - **Green progress bar** — processing percentage, driven by SSE events from the backend
   - Upload time, processing time, and total time once the job completes
   - A remove button for pending or finished files
+  - Backend error messages are surfaced directly (e.g. `"only .csv files are allowed"`) rather than the generic Axios status string
 - **Start Import** — uploads all pending files in parallel (one request per file). The button is disabled while importing is in progress.
 - **Overall time** — displayed once every file in the current batch has finished.
 
