@@ -1,10 +1,10 @@
-import { useUpload } from '../hooks/useUpload';
+import { useUploadContext } from '../context/UploadContext';
 import DropZone from '../components/upload/DropZone';
 import FileList from '../components/upload/FileList';
 
 export default function UploadPage() {
   const { files, isImporting, addFiles, removeFile, clearFinished, startImport } =
-    useUpload();
+    useUploadContext();
 
   const hasPending = files.some((f) => f.status === 'pending');
   const hasFinished = files.some(

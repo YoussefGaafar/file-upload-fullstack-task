@@ -12,7 +12,12 @@ export type UploadStatus =
 export interface FileUploadState {
   /** Stable local key (before the server returns a job_id). */
   localId: string;
-  file: File;
+  /** Undefined for jobs restored from localStorage (File objects cannot be persisted). */
+  file?: File;
+  /** Always present — copied from file.name on creation, persisted in localStorage. */
+  fileName: string;
+  /** Always present — copied from file.size on creation, persisted in localStorage. */
+  fileSize: number;
   jobId?: string;
   status: UploadStatus;
 

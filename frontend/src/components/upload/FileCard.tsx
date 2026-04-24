@@ -65,7 +65,8 @@ function formatBytes(bytes: number): string {
 export default function FileCard({ entry, onRemove }: Props) {
   const {
     localId,
-    file,
+    fileName,
+    fileSize,
     status,
     uploadProgress,
     processProgress,
@@ -101,10 +102,10 @@ export default function FileCard({ entry, onRemove }: Props) {
 
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-gray-800">
-              {file.name}
+              {fileName}
             </p>
             <p className="text-xs text-gray-400">
-              {formatBytes(file.size)}
+              {formatBytes(fileSize)}
               {totalRows ? ` · ${totalRows.toLocaleString()} rows` : ''}
             </p>
           </div>

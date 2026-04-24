@@ -128,8 +128,10 @@ Browse all records stored in the database.
 ```
 frontend/src/
 ├── types/index.ts                     # Shared TypeScript interfaces & constants
+├── context/
+│   └── UploadContext.tsx              # UploadProvider + useUploadContext — persists state above the router
 ├── hooks/
-│   ├── useUpload.ts                   # Upload state machine + SSE wiring
+│   ├── useUpload.ts                   # Upload state machine + SSE wiring + localStorage persistence
 │   └── useStudents.ts                 # Students query, filter, and sort state
 ├── components/
 │   ├── layout/Navbar.tsx              # Sticky top nav with active-link highlighting
@@ -165,10 +167,23 @@ User clicks "Start Import"
 For each file (all in parallel):
   1. POST /api/upload  →  Axios onUploadProgress drives upload bar
   2. Receive job_id from response
-  3. Open EventSource /api/progress/:jobId
-  4. Each SSE event updates the processing bar + timings
-  5. On status=completed|failed → close EventSource
+  3. job_id saved to localStorage (survives tab switches + page refresh)
+  4. Open EventSource /api/progress/:jobId
+  5. Each SSE event updates the processing bar + timings
+  6. On status=completed|failed → close EventSource, remove from localStorage
 ```
+
+## State Persistence
+
+Upload state is preserved across in-app navigation and page refreshes via two mechanisms:
+
+**Tab switching (in-app navigation)**
+`useUpload` is instantiated once inside `UploadProvider` which wraps the entire app above the router. Navigating between `/` and `/students` does not unmount the provider, so all file states and SSE connections remain alive.
+
+**Page refresh / browser close**
+When a file receives a `job_id` from the server it is written to `localStorage` (key: `grade_importer_jobs`). On next page load, `useUpload` reads localStorage in its `useState` initialiser — restored jobs appear immediately as `processing`. A `useEffect` then reconnects SSE streams for each restored job. When the SSE receives a terminal event (`completed` or `failed`) the entry is removed from localStorage automatically.
+
+> **Note:** The browser `File` object cannot be persisted — restored jobs display their file name and size (saved in localStorage) but cannot be re-uploaded. They are read-only cards that update to their final state via SSE.
 
 ---
 

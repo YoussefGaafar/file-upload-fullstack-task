@@ -192,6 +192,20 @@ I chose counting newline bytes directly over parsing the CSV to count rows becau
 
 ---
 
+## Client Reconnection & Job Persistence
+
+The Go backend holds all job state in memory inside the `JobManager` singleton. If the client disconnects (tab switch, page refresh, browser close) while a job is processing, the backend continues uninterrupted — the goroutine runs with a background context that is never cancelled by the HTTP request lifecycle.
+
+**How the client reconnects:**
+1. When the frontend receives a `job_id` it writes it to `localStorage`.
+2. On the next page load the frontend reads `localStorage`, renders the job cards immediately, and reopens an `EventSource` to `GET /api/progress/:jobId` for each active job.
+3. If the job has already completed, the `ProgressHandler` detects the terminal state and sends the final snapshot immediately before closing the SSE stream.
+4. If the server was restarted (in-memory state lost), the SSE returns 404 → the frontend marks the job as failed and removes it from localStorage.
+
+> **Limitation:** Job state is not persisted to the database. A server restart loses all in-flight job metadata. For production workloads requiring durability, job state would need to be stored in PostgreSQL.
+
+---
+
 ## Known Deployment Issues & Explicit Error Handling
 
 This section documents real errors encountered during production deployment and exactly how they were resolved. Each fix is explicit — no silent fallbacks.
